@@ -385,12 +385,15 @@ class StoreService {
   }
 
   async updateSkill(skillId: string, updates: Partial<Skill>) {
+      // Force status to PENDING on update to require re-verification
+      const updatesWithStatus = { ...updates, status: SkillStatus.PENDING };
+
       if (isFirebaseReady()) {
-          await updateDoc(doc(db, 'skills', skillId), updates);
+          await updateDoc(doc(db, 'skills', skillId), updatesWithStatus);
       } else {
           const index = MOCK_SKILLS.findIndex(s => s.id === skillId);
           if (index !== -1) {
-              MOCK_SKILLS[index] = { ...MOCK_SKILLS[index], ...updates };
+              MOCK_SKILLS[index] = { ...MOCK_SKILLS[index], ...updatesWithStatus };
           }
       }
   }
@@ -483,6 +486,7 @@ class StoreService {
       // 2. Proceed if no duplicate
       await this.addCoins(-1);
 
+      // Construct object without undefined keys
       const newSwap: any = {
           requesterId,
           receiverId,
@@ -490,9 +494,17 @@ class StoreService {
           status: SwapStatus.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
-          messages: [],
-          ...(isProject ? { offeredProjectId: offeredId, requestedProjectId: requestedId, deadline } : { offeredSkillId: offeredId, requestedSkillId: requestedId })
+          messages: []
       };
+
+      if (isProject) {
+          newSwap.offeredProjectId = offeredId;
+          newSwap.requestedProjectId = requestedId;
+          if (deadline) newSwap.deadline = deadline;
+      } else {
+          newSwap.offeredSkillId = offeredId;
+          newSwap.requestedSkillId = requestedId;
+      }
       
       const msg: Message = {
           id: `msg_${Date.now()}`,
@@ -521,15 +533,19 @@ class StoreService {
   }
 
   async sendMessage(swapId: string, senderId: string, text: string, imageUrl?: string): Promise<Message> {
-      const newMessage: Message = {
+      // Create object without undefined keys
+      const newMessage: any = {
           id: `msg_${Date.now()}_${Math.random()}`,
           senderId,
           text,
           type: senderId === 'system' ? 'system' : (imageUrl ? 'image' : 'text'),
-          imageUrl,
           timestamp: new Date(),
           status: 'sent'
       };
+      
+      if (imageUrl) {
+          newMessage.imageUrl = imageUrl;
+      }
       
       if (isFirebaseReady()) {
           const swapRef = doc(db, 'swaps', swapId);
@@ -540,10 +556,10 @@ class StoreService {
       } else {
           const swap = MOCK_SWAPS.find(s => s.id === swapId);
           if (!swap) throw new Error("Swap not found");
-          swap.messages.push(newMessage);
+          swap.messages.push(newMessage as Message);
           swap.updatedAt = new Date();
       }
-      return newMessage;
+      return newMessage as Message;
   }
 
   async acceptSwap(swapId: string): Promise<{ success: boolean, message: string }> {

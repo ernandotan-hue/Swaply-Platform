@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { store } from '../services/mockStore';
 import { Project, SkillCategory, User } from '../types';
-import { Search, MapPin, Briefcase, Calendar, FolderOpen, ArrowLeftRight } from 'lucide-react';
+import { Search, MapPin, Briefcase, Calendar, FolderOpen, ArrowLeftRight, Download, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Projects: React.FC = () => {
@@ -119,7 +119,7 @@ const Projects: React.FC = () => {
                 {filteredProjects.map(project => {
                     const owner = users[project.userId];
                     return (
-                        <div key={project.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-lg transition">
+                        <div key={project.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-lg transition flex flex-col">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
                                     <FolderOpen className="w-6 h-6" />
@@ -128,7 +128,7 @@ const Projects: React.FC = () => {
                             </div>
                             
                             <h3 className="font-bold text-lg text-slate-800 mb-2">{project.title}</h3>
-                            <p className="text-sm text-slate-500 line-clamp-2 mb-4">{project.description}</p>
+                            <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-1">{project.description}</p>
                             
                             <div className="bg-slate-50 p-3 rounded-lg mb-4">
                                 <p className="text-xs font-bold text-slate-400 uppercase mb-1">Requirements</p>
@@ -142,13 +142,26 @@ const Projects: React.FC = () => {
                                     <p className="text-slate-500">{new Date(project.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
+                            
+                            <div className="space-y-2 mt-auto">
+                                {project.fileUrl && project.fileUrl !== '#' && (
+                                    <a 
+                                        href={project.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition flex items-center justify-center gap-2 text-sm"
+                                    >
+                                        <Download className="w-4 h-4" /> View Project File
+                                    </a>
+                                )}
 
-                            <button 
-                                onClick={() => handleSwapRequest(project)}
-                                className="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2"
-                            >
-                                <ArrowLeftRight className="w-4 h-4" /> Swap Project
-                            </button>
+                                <button 
+                                    onClick={() => handleSwapRequest(project)}
+                                    className="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                                >
+                                    <ArrowLeftRight className="w-4 h-4" /> Swap Project
+                                </button>
+                            </div>
                         </div>
                     );
                 })}

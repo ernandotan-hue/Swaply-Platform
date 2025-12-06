@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Loader, Image as ImageIcon, Check } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Loader, Image as ImageIcon, Check, AlertCircle } from 'lucide-react';
 import { store } from '../services/mockStore';
 import { SkillCategory, SkillLevel } from '../types';
 
@@ -60,10 +60,15 @@ const AddSkill: React.FC = () => {
       try {
           if (skillId) {
               // Update existing skill
-              await store.updateSkill(skillId, {
-                  ...formData,
-                  image: selectedImage
-              });
+              if (confirm("Note: Updating your skill will reset its status to 'Pending Verification'. Continue?")) {
+                  await store.updateSkill(skillId, {
+                      ...formData,
+                      image: selectedImage
+                  });
+              } else {
+                  setLoading(false);
+                  return;
+              }
           } else {
               // Create new skill
               await store.addSkill(user.id, {
@@ -91,6 +96,13 @@ const AddSkill: React.FC = () => {
             </button>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{skillId ? 'Edit Skill' : 'Add New Skill'}</h1>
         </div>
+
+        {skillId && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-4 rounded-xl flex gap-3 text-amber-800 dark:text-amber-200">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-sm">Editing this skill will require it to be re-verified by an admin before it appears in public searches again.</p>
+            </div>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-8">
             
