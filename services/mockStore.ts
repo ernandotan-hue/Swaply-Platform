@@ -1,3 +1,4 @@
+
 import { User, Skill, Swap, SwapStatus, SkillCategory, Message, SkillLevel, SkillStatus, Project, SwapType } from '../types';
 import { auth, db, storage } from './firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -153,21 +154,37 @@ class StoreService {
   }
 
   async uploadFile(file: File, path: string): Promise<string> {
+      // Immediate local URL for fallback/fast feedback
+      const localUrl = URL.createObjectURL(file);
+
+      // If file is too large for a quick demo, just use local URL immediately
+      if (file.size > 5 * 1024 * 1024) { 
+          return localUrl;
+      }
+
       if (isFirebaseReady() && storage) {
           try {
               const storageRef = ref(storage, path);
-              await uploadBytes(storageRef, file);
-              const url = await getDownloadURL(storageRef);
+              
+              // Race against a 3-second timeout. If upload takes too long, we assume slow connection and proceed with local URL
+              // to prevent the "very long loading" issue.
+              const timeout = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error("Upload timed out")), 3000)
+              );
+              
+              const uploadTask = uploadBytes(storageRef, file).then(async () => {
+                   return await getDownloadURL(storageRef);
+              });
+
+              const url = await Promise.race([uploadTask, timeout]) as string;
               return url;
           } catch (e: any) {
-              console.error("Upload failed:", e);
-              // Fallback for when Storage is not enabled or rules fail
-              console.warn("⚠️ Using local URL fallback. Enable Firebase Storage for cross-device images.");
-              return URL.createObjectURL(file);
+              console.warn("Upload failed or timed out (using local fallback for speed):", e);
+              return localUrl;
           }
       } else {
           // Mock mode fallback
-          return URL.createObjectURL(file);
+          return localUrl;
       }
   }
 
@@ -367,6 +384,17 @@ class StoreService {
       }
   }
 
+  async updateSkill(skillId: string, updates: Partial<Skill>) {
+      if (isFirebaseReady()) {
+          await updateDoc(doc(db, 'skills', skillId), updates);
+      } else {
+          const index = MOCK_SKILLS.findIndex(s => s.id === skillId);
+          if (index !== -1) {
+              MOCK_SKILLS[index] = { ...MOCK_SKILLS[index], ...updates };
+          }
+      }
+  }
+
   async verifySkill(skillId: string) {
       if (isFirebaseReady()) {
           await updateDoc(doc(db, 'skills', skillId), { status: SkillStatus.VERIFIED });
@@ -437,6 +465,22 @@ class StoreService {
       const user = this.getCurrentUser();
       if (!user || user.coins < 1) return null;
 
+      // 1. Check for existing active swap to prevent duplicates
+      const existingSwaps = await this.getSwapsForUser(requesterId);
+      const duplicate = existingSwaps.find(s => 
+          s.receiverId === receiverId && 
+          s.status !== SwapStatus.COMPLETED && 
+          s.status !== SwapStatus.DECLINED && 
+          s.status !== SwapStatus.CANCELLED &&
+          ((!isProject && s.requestedSkillId === requestedId) || (isProject && s.requestedProjectId === requestedId))
+      );
+      
+      if (duplicate) {
+          console.log("Duplicate swap found, redirecting to existing swap:", duplicate.id);
+          return duplicate;
+      }
+
+      // 2. Proceed if no duplicate
       await this.addCoins(-1);
 
       const newSwap: any = {
@@ -539,6 +583,7 @@ class StoreService {
       }
   }
 
+  // UPDATED: Now sets WAITING_VERIFICATION instead of COMPLETED directly
   async completeSwap(swapId: string, proofUrl: string, note: string) {
       if (isFirebaseReady()) {
            const swapSnap = await getDoc(doc(db, 'swaps', swapId));
@@ -556,11 +601,10 @@ class StoreService {
                 await updateDoc(doc(db, 'swaps', swapId), updates);
                 await this.sendMessage(swapId, 'system', 'Project file submitted! Waiting for review.');
            } else {
-                updates.status = SwapStatus.COMPLETED;
+                // For skills, mark as waiting verification
+                updates.status = SwapStatus.WAITING_VERIFICATION;
                 await updateDoc(doc(db, 'swaps', swapId), updates);
-                await this.sendMessage(swapId, 'system', 'Swap Completed! +100 Points.');
-                await this.awardPoints(swap.requesterId, 100);
-                await this.awardPoints(swap.receiverId, 100);
+                await this.sendMessage(swapId, 'system', 'Swap marked complete. Waiting for partner verification.');
            }
       } else {
           const swap = MOCK_SWAPS.find(s => s.id === swapId);
@@ -574,15 +618,15 @@ class StoreService {
               swap.status = SwapStatus.IN_REVIEW;
               await this.sendMessage(swapId, 'system', 'Project file submitted! Waiting for review.');
           } else {
-              swap.status = SwapStatus.COMPLETED;
-              await this.sendMessage(swapId, 'system', 'Swap Completed! +100 Points.');
-              await this.awardPoints(swap.requesterId, 100);
-              await this.awardPoints(swap.receiverId, 100);
+              // For skills
+              swap.status = SwapStatus.WAITING_VERIFICATION;
+              await this.sendMessage(swapId, 'system', 'Swap marked complete. Waiting for partner verification.');
           }
       }
   }
 
-  async submitReview(swapId: string, rating: number, comment: string) {
+  // NEW: Handles the final verification and rating
+  async verifyAndRateSwap(swapId: string, rating: number, comment: string) {
       if (isFirebaseReady()) {
            const swapSnap = await getDoc(doc(db, 'swaps', swapId));
            if (!swapSnap.exists()) return;
@@ -595,7 +639,7 @@ class StoreService {
                updatedAt: new Date()
            });
 
-           await this.sendMessage(swapId, 'system', `Project Rated ${rating}/5 Stars.`);
+           await this.sendMessage(swapId, 'system', `Swap Verified & Rated ${rating}/5 Stars.`);
            await this.awardPoints(swap.requesterId, 100);
            await this.awardPoints(swap.receiverId, 100);
       } else {
@@ -607,10 +651,15 @@ class StoreService {
           swap.status = SwapStatus.COMPLETED;
           swap.updatedAt = new Date();
 
-          await this.sendMessage(swapId, 'system', `Project Rated ${rating}/5 Stars.`);
+          await this.sendMessage(swapId, 'system', `Swap Verified & Rated ${rating}/5 Stars.`);
           await this.awardPoints(swap.requesterId, 100);
           await this.awardPoints(swap.receiverId, 100);
       }
+  }
+  
+  // Re-using for Project review flow which is slightly different (direct rating)
+  async submitReview(swapId: string, rating: number, comment: string) {
+      return this.verifyAndRateSwap(swapId, rating, comment);
   }
 
   private async awardPoints(userId: string, amount: number) {

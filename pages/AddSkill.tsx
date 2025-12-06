@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, ChevronLeft, CheckCircle, Loader } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronLeft, CheckCircle, Loader, Image as ImageIcon, Check } from 'lucide-react';
 import { store } from '../services/mockStore';
 import { SkillCategory, SkillLevel } from '../types';
 
+const PRESET_IMAGES = [
+  { id: 'tech', url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80', label: 'Tech' },
+  { id: 'design', url: 'https://images.unsplash.com/photo-1544531586-fde5298cdd40?w=800&q=80', label: 'Design' },
+  { id: 'music', url: 'https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?w=800&q=80', label: 'Music' },
+  { id: 'business', url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80', label: 'Business' },
+  { id: 'lifestyle', url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80', label: 'Lifestyle' },
+  { id: 'language', url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80', label: 'Language' },
+  { id: 'art', url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', label: 'Art' },
+  { id: 'other', url: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=800&q=80', label: 'Other' },
+];
+
 const AddSkill: React.FC = () => {
   const navigate = useNavigate();
+  const { skillId } = useParams(); // Check if we are editing
   const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [initialLoading, setInitialLoading] = useState(!!skillId);
+  const [selectedImage, setSelectedImage] = useState(PRESET_IMAGES[0].url);
   
   const [formData, setFormData] = useState({
       title: '',
@@ -18,13 +31,24 @@ const AddSkill: React.FC = () => {
       experience: 0
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-          setImageFile(file);
-          setPreviewUrl(URL.createObjectURL(file));
+  // Load existing data if editing
+  useEffect(() => {
+      if (skillId) {
+          store.getSkillById(skillId).then(skill => {
+              if (skill) {
+                  setFormData({
+                      title: skill.title,
+                      description: skill.description,
+                      category: skill.category,
+                      level: skill.level,
+                      experience: skill.experience
+                  });
+                  setSelectedImage(skill.image);
+              }
+              setInitialLoading(false);
+          });
       }
-  };
+  }, [skillId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -34,45 +58,72 @@ const AddSkill: React.FC = () => {
       setLoading(true);
       
       try {
-          let imageUrl = 'https://picsum.photos/400/300';
-          
-          if (imageFile) {
-              const path = `skills/${user.id}/${Date.now()}_${imageFile.name}`;
-              imageUrl = await store.uploadFile(imageFile, path);
+          if (skillId) {
+              // Update existing skill
+              await store.updateSkill(skillId, {
+                  ...formData,
+                  image: selectedImage
+              });
+          } else {
+              // Create new skill
+              await store.addSkill(user.id, {
+                  ...formData,
+                  image: selectedImage
+              });
           }
-
-          await store.addSkill(user.id, {
-              ...formData,
-              image: imageUrl
-          });
           
           navigate('/profile');
       } catch (error) {
-          console.error("Failed to add skill:", error);
-          alert("Could not add skill. Check your connection or permissions.");
+          console.error("Failed to save skill:", error);
+          alert("Could not save skill. Check your connection or permissions.");
       } finally {
           setLoading(false);
       }
   };
 
+  if (initialLoading) return <div className="flex h-screen items-center justify-center"><Loader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pb-10">
         <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition">
+            <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition">
                 <ChevronLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-bold text-slate-800">Add New Skill</h1>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{skillId ? 'Edit Skill' : 'Add New Skill'}</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-8">
             
+            <div className="space-y-4">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">Choose a Background Cover</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {PRESET_IMAGES.map((img) => (
+                        <div 
+                            key={img.id}
+                            onClick={() => setSelectedImage(img.url)}
+                            className={`relative aspect-video rounded-xl overflow-hidden cursor-pointer group border-2 transition-all ${selectedImage === img.url ? 'border-indigo-600 ring-2 ring-indigo-200 dark:ring-indigo-900' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'}`}
+                        >
+                            <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                            <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${selectedImage === img.url ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                {selectedImage === img.url && <CheckCircle className="w-8 h-8 text-white drop-shadow-md" />}
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                                <span className="text-xs font-bold text-white">{img.label}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="border-t border-slate-100 dark:border-slate-800 my-6"></div>
+
             <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Skill Title</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Skill Title</label>
                 <input 
                     type="text" 
                     required
                     placeholder="e.g. Advanced Photography"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-slate-900 dark:text-white placeholder-slate-400"
                     value={formData.title}
                     onChange={e => setFormData({...formData, title: e.target.value})}
                 />
@@ -80,81 +131,65 @@ const AddSkill: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
-                    <select 
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
-                        value={formData.category}
-                        onChange={e => setFormData({...formData, category: e.target.value as SkillCategory})}
-                    >
-                        {Object.values(SkillCategory).map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Category</label>
+                    <div className="relative">
+                        <select 
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white appearance-none cursor-pointer"
+                            value={formData.category}
+                            onChange={e => setFormData({...formData, category: e.target.value as SkillCategory})}
+                        >
+                            {Object.values(SkillCategory).map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
+                    </div>
                 </div>
                 <div>
-                     <label className="block text-sm font-semibold text-slate-700 mb-2">Skill Level</label>
-                     <select 
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
-                        value={formData.level}
-                        onChange={e => setFormData({...formData, level: e.target.value as SkillLevel})}
-                     >
-                        {Object.values(SkillLevel).map(l => <option key={l} value={l}>{l}</option>)}
-                     </select>
+                     <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Skill Level</label>
+                     <div className="relative">
+                        <select 
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white appearance-none cursor-pointer"
+                            value={formData.level}
+                            onChange={e => setFormData({...formData, level: e.target.value as SkillLevel})}
+                        >
+                            {Object.values(SkillLevel).map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
+                     </div>
                 </div>
             </div>
 
             <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Years of Experience</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Years of Experience</label>
                 <input 
                     type="number" 
                     min="0"
                     max="50"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-slate-900 dark:text-white"
                     value={formData.experience}
                     onChange={e => setFormData({...formData, experience: parseInt(e.target.value)})}
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Description</label>
                 <textarea 
                     required
                     rows={4}
                     placeholder="Describe what you can offer, your teaching style, or specific techniques..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition resize-none"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition resize-none text-slate-900 dark:text-white placeholder-slate-400"
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
                 />
             </div>
 
-            <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Proof / Portfolio Image</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:bg-slate-50 transition cursor-pointer relative overflow-hidden group">
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                    {previewUrl ? (
-                        <div className="relative">
-                            <img src={previewUrl} className="h-48 w-full object-cover rounded-lg" />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                                <span className="text-white font-medium">Click to change</span>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center gap-2 text-slate-400">
-                            <Upload className="w-8 h-8 text-slate-300" />
-                            <span>Click to upload verification image</span>
-                            <span className="text-xs">Certificates, work samples, etc.</span>
-                        </div>
-                    )}
-                </div>
-                <p className="text-xs text-amber-600 mt-2">Note: All skills require admin verification before being publicly visible.</p>
-            </div>
-
             <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2"
             >
-                {loading ? <><Loader className="w-5 h-5 animate-spin" /> Uploading & Saving...</> : (
+                {loading ? <><Loader className="w-5 h-5 animate-spin" /> {skillId ? 'Updating...' : 'Publishing...'}</> : (
                     <>
-                        <CheckCircle className="w-5 h-5" /> Submit for Verification
+                        <CheckCircle className="w-5 h-5" /> {skillId ? 'Update Skill' : 'Publish Skill'}
                     </>
                 )}
             </button>

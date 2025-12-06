@@ -70,7 +70,7 @@ const Projects: React.FC = () => {
 
         if (result) {
             setShowSwapModal(null);
-            navigate('/messages');
+            navigate('/messages', { state: { highlightSwapId: result.id } });
         } else {
             alert("Failed to create swap. Check coins.");
         }

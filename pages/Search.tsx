@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search as SearchIcon, Filter, MapPin, SlidersHorizontal, ArrowLeftRight, Briefcase, Loader } from 'lucide-react';
+import { Search as SearchIcon, Filter, MapPin, SlidersHorizontal, ArrowLeftRight, Briefcase, Loader, Sparkles } from 'lucide-react';
 import { store } from '../services/mockStore';
 import { Skill, SkillCategory, User } from '../types';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ const SearchPage: React.FC = () => {
   const [results, setResults] = useState<Skill[]>([]);
   const [users, setUsers] = useState<Record<string, User>>({});
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [showSwapModal, setShowSwapModal] = useState<Skill | null>(null);
   
   // New state for handling user's available skills for swap
@@ -69,17 +70,7 @@ const SearchPage: React.FC = () => {
         }
 
         setResults(allSkills);
-
-        // Fetch users
-        const userIds = Array.from(new Set(allSkills.map(s => s.userId)));
-        const userMap: Record<string, User> = {};
-        await Promise.all(userIds.map(async (uid) => {
-            if (!users[uid]) {
-                const u = await store.getUserById(uid);
-                if (u) userMap[uid] = u;
-            }
-        }));
-        setUsers(prev => ({...prev, ...userMap}));
+        await fetchUsersForSkills(allSkills);
 
     } catch (e) {
         console.error(e);
@@ -88,9 +79,56 @@ const SearchPage: React.FC = () => {
     }
   };
 
+  const fetchUsersForSkills = async (skillsToFetch: Skill[]) => {
+      const userIds = Array.from(new Set(skillsToFetch.map(s => s.userId)));
+      const userMap: Record<string, User> = { ...users }; // Start with existing cache
+      let hasUpdates = false;
+      
+      await Promise.all(userIds.map(async (uid) => {
+          if (!userMap[uid]) {
+              const u = await store.getUserById(uid);
+              if (u) {
+                  userMap[uid] = u;
+                  hasUpdates = true;
+              }
+          }
+      }));
+      
+      if (hasUpdates) setUsers(userMap);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     filterResults(query, selectedCategory);
+  };
+
+  const handleSmartMatch = async () => {
+      if (!query.trim()) {
+          alert("Please enter what you're looking for first.");
+          return;
+      }
+      
+      setAiLoading(true);
+      try {
+          const allSkills = await store.getSkills();
+          // Pass titles for AI to match against
+          const skillTitles = allSkills.map(s => s.title);
+          const matchedTitles = await findSmartMatches(query, skillTitles);
+          
+          if (matchedTitles && matchedTitles.length > 0) {
+              const aiFiltered = allSkills.filter(s => matchedTitles.includes(s.title));
+              setResults(aiFiltered);
+              await fetchUsersForSkills(aiFiltered);
+          } else {
+              setResults([]);
+          }
+      } catch (e) {
+          console.error("AI Match failed", e);
+          // Fallback to normal search
+          filterResults(query, selectedCategory);
+      } finally {
+          setAiLoading(false);
+      }
   };
 
   const handleSendRequest = async (targetSkill: Skill) => {
@@ -121,7 +159,8 @@ const SearchPage: React.FC = () => {
       }
 
       setShowSwapModal(null);
-      navigate('/messages');
+      // Pass the swap ID to the messages page so it opens this specific chat
+      navigate('/messages', { state: { highlightSwapId: result.id } });
   };
 
   return (
@@ -159,16 +198,29 @@ const SearchPage: React.FC = () => {
             <option value="All">All Categories</option>
             {Object.values(SkillCategory).map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+          
           <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-md">
             Search
+          </button>
+          
+          <button 
+             type="button" 
+             onClick={handleSmartMatch}
+             disabled={aiLoading}
+             className="px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold rounded-xl hover:from-violet-600 hover:to-fuchsia-600 transition shadow-md flex items-center gap-2 whitespace-nowrap disabled:opacity-70"
+          >
+            {aiLoading ? <Loader className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+            AI Match
           </button>
         </form>
       </div>
 
-      {loading ? (
+      {loading || aiLoading ? (
           <div className="text-center py-20">
               <div className="animate-spin w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full mx-auto mb-4"></div>
-              <p className="text-slate-500 dark:text-slate-400">Finding best matches...</p>
+              <p className="text-slate-500 dark:text-slate-400">
+                  {aiLoading ? "Consulting AI for smart matches..." : "Finding best matches..."}
+              </p>
           </div>
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -221,7 +273,7 @@ const SearchPage: React.FC = () => {
             })}
             {results.length === 0 && (
                 <div className="col-span-full text-center py-10 text-slate-500 dark:text-slate-400">
-                    No skills found matching your criteria. Try a broader search.
+                    No skills found matching your criteria. Try a broader search or use AI Match.
                 </div>
             )}
           </div>

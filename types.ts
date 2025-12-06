@@ -77,8 +77,9 @@ export enum SwapStatus {
   PENDING = 'PENDING',
   ACCEPTED = 'ACCEPTED',
   DECLINED = 'DECLINED',
-  IN_REVIEW = 'IN_REVIEW', // New intermediate status for projects
-  COMPLETED = 'COMPLETED',
+  IN_REVIEW = 'IN_REVIEW', // For projects upload
+  WAITING_VERIFICATION = 'WAITING_VERIFICATION', // New status: Completed by doer, waiting for receiver
+  COMPLETED = 'COMPLETED', // Fully finished and rated
   CANCELLED = 'CANCELLED'
 }
 

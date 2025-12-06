@@ -201,6 +201,7 @@ const App: React.FC = () => {
         <Route path="/messages" element={<ProtectedRoute><Layout><Chat /></Layout></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
         <Route path="/add-skill" element={<ProtectedRoute><Layout><AddSkill /></Layout></ProtectedRoute>} />
+        <Route path="/edit-skill/:skillId" element={<ProtectedRoute><Layout><AddSkill /></Layout></ProtectedRoute>} />
         <Route path="/add-project" element={<ProtectedRoute><Layout><AddProject /></Layout></ProtectedRoute>} />
         <Route path="/complete-swap/:swapId" element={<ProtectedRoute><Layout><CompleteSwap /></Layout></ProtectedRoute>} />
         <Route path="/review-project/:swapId" element={<ProtectedRoute><Layout><ReviewProject /></Layout></ProtectedRoute>} />

@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { store } from '../services/mockStore';
-import { MapPin, Star, Clock, Plus, Settings, Trophy, ShieldCheck, Award, Wallet, Timer, ShoppingCart, X, Check, Edit2, Camera, Briefcase, Loader } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { MapPin, Star, Clock, Plus, Settings, Trophy, ShieldCheck, Award, Wallet, Timer, ShoppingCart, X, Check, Edit2, Camera, Briefcase, Loader, Pencil } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Skill, SkillStatus } from '../types';
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(store.getCurrentUser());
   const [showShop, setShowShop] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -213,12 +214,21 @@ const Profile: React.FC = () => {
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-slate-800 dark:text-white">{skill.title}</h3>
-                                        <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${
-                                            skill.status === SkillStatus.VERIFIED ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
-                                            skill.status === SkillStatus.REJECTED ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                        }`}>
-                                            {skill.status}
-                                        </span>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => navigate(`/edit-skill/${skill.id}`)}
+                                                className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                                                title="Edit Skill"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${
+                                                skill.status === SkillStatus.VERIFIED ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
+                                                skill.status === SkillStatus.REJECTED ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                            }`}>
+                                                {skill.status}
+                                            </span>
+                                        </div>
                                     </div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{skill.description}</p>
                                     <div className="flex items-center gap-2 mt-2">
