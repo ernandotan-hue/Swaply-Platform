@@ -1,6 +1,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Ensure process.env.API_KEY is accessed safely. 
+// In Vite, defined process.env properties are replaced at build time.
+const apiKey = process.env.API_KEY || '';
+
+const ai = new GoogleGenAI({ apiKey });
 
 export const generateIcebreaker = async (mySkill: string, theirSkill: string): Promise<string> => {
   try {

@@ -24,6 +24,11 @@ const MANUAL_CONFIG = {
 
 // Safe environment variable access supporting multiple prefixes
 const getEnv = (key: string): string => {
+    // Check if import.meta.env exists (Vite standard)
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+        return import.meta.env[`VITE_${key}`] || import.meta.env[key] || '';
+    }
+    // Fallback for process.env if available
     try {
         if (typeof process !== 'undefined' && process.env) {
             return process.env[`REACT_APP_${key}`] || process.env[`VITE_${key}`] || process.env[key] || '';
