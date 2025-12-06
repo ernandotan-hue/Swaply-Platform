@@ -90,14 +90,14 @@ const Chat: React.FC = () => {
       navigate(`/complete-swap/${swapId}`);
   };
 
-  if (!currentUser) return <div className="p-8 text-center text-slate-500">Please login to view messages.</div>;
+  if (!currentUser) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Please login to view messages.</div>;
 
   return (
-    <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+    <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
       {/* Sidebar List */}
-      <div className={`w-full md:w-80 border-r border-slate-200 flex flex-col ${activeSwap ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-4 border-b border-slate-100 bg-slate-50">
-          <h2 className="font-bold text-slate-800">Messages</h2>
+      <div className={`w-full md:w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col ${activeSwap ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+          <h2 className="font-bold text-slate-800 dark:text-white">Messages</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
           {mySwaps.length === 0 ? (
@@ -112,20 +112,20 @@ const Chat: React.FC = () => {
                     <div 
                         key={swap.id}
                         onClick={() => setActiveSwap(swap)}
-                        className={`p-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-50 ${activeSwap?.id === swap.id ? 'bg-indigo-50/50' : ''}`}
+                        className={`p-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800 ${activeSwap?.id === swap.id ? 'bg-indigo-50/50 dark:bg-slate-800' : ''}`}
                     >
                         <div className="relative">
-                            <img src={otherUser?.avatar || 'https://via.placeholder.com/40'} alt={otherUser?.name} className="w-12 h-12 rounded-full object-cover" />
+                            <img src={otherUser?.avatar || 'https://via.placeholder.com/40'} alt={otherUser?.name} className="w-12 h-12 rounded-full object-cover bg-slate-200 dark:bg-slate-700" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-baseline mb-1">
-                                <h3 className="font-semibold text-slate-800 truncate">{otherUser?.name || 'Unknown'}</h3>
+                                <h3 className="font-semibold text-slate-800 dark:text-white truncate">{otherUser?.name || 'Unknown'}</h3>
                                 <span className="text-xs text-slate-400">{lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
                             </div>
                             <div className="flex items-center gap-1 mb-1">
-                                {swap.type === SwapType.PROJECT && <span className="text-[10px] bg-slate-100 text-slate-600 px-1 rounded">PROJ</span>}
+                                {swap.type === SwapType.PROJECT && <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1 rounded">PROJ</span>}
                             </div>
-                            <p className="text-sm text-slate-500 truncate">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                                 {lastMsg ? (
                                     lastMsg.type === 'system' ? '🔔 System Notification' : 
                                     lastMsg.type === 'swap_request' ? '📄 Swap Request' :
@@ -144,9 +144,9 @@ const Chat: React.FC = () => {
       {activeSwap ? (
         <div className={`flex-1 flex flex-col ${!activeSwap ? 'hidden md:flex' : 'flex'}`}>
             {/* Chat Header */}
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white z-10 shadow-sm">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 z-10 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => setActiveSwap(null)} className="md:hidden text-slate-500 hover:text-slate-800">
+                    <button onClick={() => setActiveSwap(null)} className="md:hidden text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">
                         <ArrowLeft className="w-6 h-6" />
                     </button>
                     {(() => {
@@ -154,15 +154,15 @@ const Chat: React.FC = () => {
                         const otherUser = users[otherUserId];
                         return (
                             <>
-                                <img src={otherUser?.avatar || 'https://via.placeholder.com/40'} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                <img src={otherUser?.avatar || 'https://via.placeholder.com/40'} alt="" className="w-10 h-10 rounded-full object-cover bg-slate-200 dark:bg-slate-700" />
                                 <div>
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                    <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
                                         {otherUser?.name}
                                         {activeSwap.status === SwapStatus.ACCEPTED && (
-                                            <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">Active</span>
+                                            <span className="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">Active</span>
                                         )}
                                         {activeSwap.status === SwapStatus.COMPLETED && (
-                                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">Completed</span>
+                                            <span className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-800">Completed</span>
                                         )}
                                     </h3>
                                 </div>
@@ -183,7 +183,7 @@ const Chat: React.FC = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#e5ddd5]/30 bg-opacity-50 relative">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#e5ddd5]/30 dark:bg-slate-950 bg-opacity-50 relative">
                 
                 {activeSwap.messages.map((msg) => {
                     const isMe = msg.senderId === currentUser.id;
@@ -193,7 +193,7 @@ const Chat: React.FC = () => {
                     if (isSystem) {
                         return (
                             <div key={msg.id} className="flex justify-center my-4">
-                                <div className="bg-slate-200/80 text-slate-600 text-xs py-1.5 px-4 rounded-full font-medium shadow-sm">
+                                <div className="bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs py-1.5 px-4 rounded-full font-medium shadow-sm">
                                     {msg.text}
                                 </div>
                             </div>
@@ -201,21 +201,19 @@ const Chat: React.FC = () => {
                     }
 
                     if (isSwapRequest) {
-                        // In full firestore mode, fetching skills for every message is overkill
-                        // Simplified view for swap request card
                         const isReceiver = currentUser.id === activeSwap.receiverId;
                         return (
                             <div key={msg.id} className="flex justify-center my-6">
-                                <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-5 max-w-sm w-full relative overflow-hidden">
+                                <div className="bg-white dark:bg-slate-800 border border-indigo-100 dark:border-slate-700 rounded-2xl shadow-lg p-5 max-w-sm w-full relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-violet-500"></div>
-                                    <h4 className="font-bold text-slate-800 mb-2">New Swap Request</h4>
-                                    <p className="text-xs text-slate-500 mb-4">Check details in your dashboard</p>
+                                    <h4 className="font-bold text-slate-800 dark:text-white mb-2">New Swap Request</h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Check details in your dashboard</p>
 
                                     {isReceiver && activeSwap.status === SwapStatus.PENDING && (
-                                        <div className="pt-3 border-t border-slate-50 flex gap-2">
+                                        <div className="pt-3 border-t border-slate-50 dark:border-slate-700 flex gap-2">
                                             <button 
                                                 onClick={() => handleDeclineSwap(activeSwap.id)}
-                                                className="flex-1 py-2 text-slate-500 hover:bg-slate-50 rounded-lg text-sm font-medium transition"
+                                                className="flex-1 py-2 text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition"
                                             >
                                                 Decline
                                             </button>
@@ -234,10 +232,10 @@ const Chat: React.FC = () => {
 
                     return (
                         <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[80%] md:max-w-[60%] rounded-lg p-3 shadow-sm relative group ${isMe ? 'bg-[#dcf8c6] rounded-tr-none' : 'bg-white rounded-tl-none'}`}>
-                                <p className="text-slate-800 text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                            <div className={`max-w-[80%] md:max-w-[60%] rounded-lg p-3 shadow-sm relative group ${isMe ? 'bg-[#dcf8c6] dark:bg-indigo-700 dark:text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 dark:text-white rounded-tl-none'}`}>
+                                <p className="text-slate-800 dark:text-white text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                                 <div className="flex justify-end items-center gap-1 mt-1">
-                                    <span className="text-[10px] text-slate-500">
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-300/70">
                                         {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     </span>
                                 </div>
@@ -250,20 +248,20 @@ const Chat: React.FC = () => {
 
             {/* Input Area */}
             {activeSwap.status === SwapStatus.COMPLETED ? (
-                <div className="p-4 bg-slate-50 text-center border-t border-slate-200">
-                    <p className="text-sm font-bold text-green-600 flex items-center justify-center gap-2">
+                <div className="p-4 bg-slate-50 dark:bg-slate-900 text-center border-t border-slate-200 dark:border-slate-800">
+                    <p className="text-sm font-bold text-green-600 dark:text-green-400 flex items-center justify-center gap-2">
                         <Award className="w-5 h-5" /> Swap Completed!
                     </p>
                 </div>
             ) : (
-                <div className="p-3 bg-white border-t border-slate-200 flex items-end gap-2">
-                    <div className="flex-1 bg-slate-100 rounded-2xl flex items-center px-4 py-2 min-h-[44px]">
+                <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-end gap-2">
+                    <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center px-4 py-2 min-h-[44px]">
                         <textarea
                             value={messageText}
                             onChange={(e) => setMessageText(e.target.value)}
                             onKeyDown={handleKeyPress}
                             placeholder="Type a message"
-                            className="w-full bg-transparent border-none outline-none text-slate-800 resize-none h-6 text-sm py-1 no-scrollbar"
+                            className="w-full bg-transparent border-none outline-none text-slate-800 dark:text-white resize-none h-6 text-sm py-1 no-scrollbar placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             rows={1}
                         />
                     </div>
@@ -277,9 +275,9 @@ const Chat: React.FC = () => {
             )}
         </div>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center flex-col bg-slate-50 text-slate-400">
-            <MessageSquare className="w-10 h-10 text-slate-400 mb-4" />
-            <h3 className="text-lg font-medium text-slate-600">Select a chat</h3>
+        <div className="hidden md:flex flex-1 items-center justify-center flex-col bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500">
+            <MessageSquare className="w-10 h-10 mb-4" />
+            <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">Select a chat</h3>
         </div>
       )}
     </div>

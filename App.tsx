@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -28,6 +29,15 @@ const AuthPage: React.FC = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Basic dark mode check for the standalone page
+    useEffect(() => {
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -48,7 +58,6 @@ const AuthPage: React.FC = () => {
                     return;
                 }
                 
-                // Directly call registerWithPassword as it is available in StoreService
                 await store.registerWithPassword({
                     name: formData.name,
                     email: formData.email,
@@ -66,9 +75,9 @@ const AuthPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl flex overflow-hidden min-h-[600px] border border-slate-100">
-                <div className="hidden md:flex w-1/2 bg-indigo-600 p-12 flex-col justify-between relative overflow-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl w-full max-w-4xl flex overflow-hidden min-h-[600px] border border-slate-100 dark:border-slate-800">
+                <div className="hidden md:flex w-1/2 bg-indigo-600 dark:bg-indigo-700 p-12 flex-col justify-between relative overflow-hidden">
                     <div className="relative z-10 text-white">
                         <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-indigo-600 font-bold text-2xl mb-8">S</div>
                         <h1 className="text-4xl font-bold mb-6">Exchange Skills.<br/>Grow Together.</h1>
@@ -79,27 +88,27 @@ const AuthPage: React.FC = () => {
                 </div>
 
                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-2">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-                    <p className="text-slate-500 mb-8">{isLogin ? 'Enter your details.' : 'Start your journey.'}</p>
+                    <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8">{isLogin ? 'Enter your details.' : 'Start your journey.'}</p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {!isLogin && (
                             <>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                                     <input 
                                         type="text" 
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl"
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="John Doe"
                                         value={formData.name}
                                         onChange={e => setFormData({...formData, name: e.target.value})}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Location</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Location</label>
                                     <input 
                                         type="text" 
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl"
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="New York, USA"
                                         value={formData.location}
                                         onChange={e => setFormData({...formData, location: e.target.value})}
@@ -109,10 +118,10 @@ const AuthPage: React.FC = () => {
                         )}
                         
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                             <input 
                                 type="email" 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl"
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="name@example.com"
                                 value={formData.email}
                                 onChange={e => setFormData({...formData, email: e.target.value})}
@@ -120,10 +129,10 @@ const AuthPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
                             <input 
                                 type="password" 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl"
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="••••••••"
                                 value={formData.password}
                                 onChange={e => setFormData({...formData, password: e.target.value})}
@@ -141,8 +150,8 @@ const AuthPage: React.FC = () => {
                         </button>
                     </form>
                     <div className="mt-8 text-center">
-                        <p className="text-slate-500 text-sm">
-                            <button onClick={() => setIsLogin(!isLogin)} className="font-bold text-indigo-600 hover:text-indigo-800 transition">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">
+                            <button onClick={() => setIsLogin(!isLogin)} className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition">
                                 {isLogin ? 'Create an account' : 'Log in instead'}
                             </button>
                         </p>
@@ -173,7 +182,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
         return unsubscribe;
     }, []);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950"><Loader className="w-8 h-8 animate-spin text-indigo-600" /></div>;
     if (!user) return <Navigate to="/login" replace />;
     return <>{children}</>;
 };
