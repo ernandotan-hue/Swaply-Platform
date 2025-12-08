@@ -81,7 +81,7 @@ const AuthPage: React.FC = () => {
                     <div className="relative z-10 text-white">
                         <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-indigo-600 font-bold text-2xl mb-8">S</div>
                         <h1 className="text-4xl font-bold mb-6">Exchange Skills.<br/>Grow Together.</h1>
-                        <p className="text-indigo-100 text-lg">Join a community of 10,000+ swappers.</p>
+                        <p className="text-indigo-100 text-lg">Join a community where people help each other and grow.</p>
                     </div>
                     {/* Decor */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>

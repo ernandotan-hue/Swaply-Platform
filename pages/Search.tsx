@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search as SearchIcon, Filter, MapPin, SlidersHorizontal, ArrowLeftRight, Briefcase, Loader, Sparkles } from 'lucide-react';
+import { Search as SearchIcon, Filter, MapPin, SlidersHorizontal, ArrowLeftRight, Briefcase, Loader, Sparkles, MessageSquare } from 'lucide-react';
 import { store } from '../services/mockStore';
 import { Skill, SkillCategory, User } from '../types';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -129,6 +129,17 @@ const SearchPage: React.FC = () => {
       } finally {
           setAiLoading(false);
       }
+  };
+
+  const handleChat = async (targetSkill: Skill) => {
+    if (!currentUser) {
+        navigate('/login');
+        return;
+    }
+    
+    // Start or get existing conversation
+    const swapId = await store.startConversation(currentUser.id, targetSkill.userId);
+    navigate('/messages', { state: { highlightSwapId: swapId } });
   };
 
   const handleSendRequest = async (targetSkill: Skill) => {
@@ -260,13 +271,22 @@ const SearchPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
-                            <button 
-                                onClick={() => setShowSwapModal(skill)}
-                                className="w-full py-2.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-indigo-700 transition flex items-center justify-center gap-2"
-                            >
-                                <ArrowLeftRight className="w-4 h-4" /> Request Swap
-                            </button>
+                            
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => handleChat(skill)}
+                                    className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center justify-center"
+                                    title="Chat"
+                                >
+                                    <MessageSquare className="w-4 h-4" />
+                                </button>
+                                <button 
+                                    onClick={() => setShowSwapModal(skill)}
+                                    className="flex-1 py-2.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                                >
+                                    <ArrowLeftRight className="w-4 h-4" /> Request Swap
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );

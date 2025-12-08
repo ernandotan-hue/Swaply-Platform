@@ -464,6 +464,48 @@ class StoreService {
       return MOCK_SWAPS.filter(s => s.requesterId === userId || s.receiverId === userId);
   }
 
+  async startConversation(requesterId: string, receiverId: string): Promise<string> {
+      // 1. Check if ANY swap exists between these two
+      const existing = await this.getSwapsForUser(requesterId);
+      const conversation = existing.find(s => 
+          (s.requesterId === requesterId && s.receiverId === receiverId) ||
+          (s.requesterId === receiverId && s.receiverId === requesterId)
+      );
+
+      if (conversation) {
+          return conversation.id;
+      }
+
+      // 2. Create a new "Inquiry" swap if none exists
+      // We use PENDING status so it appears in Chat. 
+      // We don't deduct coins for just chatting.
+      const newSwap: any = {
+          requesterId,
+          receiverId,
+          type: SwapType.SKILL,
+          status: SwapStatus.PENDING,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          messages: [{
+              id: `msg_${Date.now()}`,
+              senderId: 'system',
+              text: 'Conversation started',
+              timestamp: new Date(),
+              type: 'system',
+              status: 'sent'
+          }]
+      };
+
+      if (isFirebaseReady()) {
+          const docRef = await addDoc(collection(db, 'swaps'), newSwap);
+          return docRef.id;
+      } else {
+          const s = { ...newSwap, id: `swap_${Date.now()}` } as Swap;
+          MOCK_SWAPS.push(s);
+          return s.id;
+      }
+  }
+
   async createSwapRequest(requesterId: string, receiverId: string, requestedId: string, offeredId: string, isProject: boolean = false, deadline?: Date): Promise<Swap | null> {
       const user = this.getCurrentUser();
       if (!user || user.coins < 1) return null;

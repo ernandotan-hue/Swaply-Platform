@@ -1,9 +1,10 @@
+
 // @ts-ignore
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAnalytics } from "firebase/analytics";
+// import { getAnalytics } from "firebase/analytics";
 
 // --- INSTRUCTIONS ---
 // 1. Go to https://console.firebase.google.com
@@ -77,13 +78,15 @@ try {
         db = getFirestore(app);
         storage = getStorage(app);
         
+        /*
         if (firebaseConfig.measurementId) {
              try {
-                analytics = getAnalytics(app);
+                // analytics = getAnalytics(app);
              } catch(e) {
                  console.warn("Analytics failed to init");
              }
         }
+        */
         console.log("✅ Firebase connected to project:", firebaseConfig.projectId);
     } else {
         console.warn("⚠️ Firebase keys missing in MANUAL_CONFIG. App running in DEMO MODE (Local Storage only).");

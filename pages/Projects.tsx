@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { store } from '../services/mockStore';
 import { Project, SkillCategory, User } from '../types';
-import { Search, MapPin, Briefcase, Calendar, FolderOpen, ArrowLeftRight, Download, ExternalLink } from 'lucide-react';
+import { Search, MapPin, Briefcase, Calendar, FolderOpen, ArrowLeftRight, Download, ExternalLink, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Projects: React.FC = () => {
@@ -46,8 +46,15 @@ const Projects: React.FC = () => {
             return;
         }
         setShowSwapModal(targetProject);
-        // Note: 'currentUser.projects' might not be populated in this lite version of migration
-        // In a real app, ensure we fetch the current user's projects too.
+    };
+
+    const handleChat = async (projectOwnerId: string) => {
+        if (!currentUser) {
+            navigate('/login');
+            return;
+        }
+        const swapId = await store.startConversation(currentUser.id, projectOwnerId);
+        navigate('/messages', { state: { highlightSwapId: swapId } });
     };
 
     const confirmSwap = async () => {
@@ -147,20 +154,30 @@ const Projects: React.FC = () => {
                                 {project.fileUrl && project.fileUrl !== '#' && (
                                     <a 
                                         href={project.fileUrl}
+                                        download
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="w-full py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition flex items-center justify-center gap-2 text-sm"
                                     >
-                                        <Download className="w-4 h-4" /> View Project File
+                                        <Download className="w-4 h-4" /> Download Project File
                                     </a>
                                 )}
 
-                                <button 
-                                    onClick={() => handleSwapRequest(project)}
-                                    className="w-full py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2"
-                                >
-                                    <ArrowLeftRight className="w-4 h-4" /> Swap Project
-                                </button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => handleChat(project.userId)}
+                                        className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition"
+                                        title="Chat"
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleSwapRequest(project)}
+                                        className="flex-1 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                                    >
+                                        <ArrowLeftRight className="w-4 h-4" /> Swap Project
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     );

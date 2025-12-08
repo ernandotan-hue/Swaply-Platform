@@ -1,11 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Star, Zap, LogIn, Twitter, Instagram, Linkedin, Globe, Briefcase, Loader } from 'lucide-react';
+import { ArrowRight, Star, Zap, LogIn, Twitter, Instagram, Linkedin, Globe, Briefcase, Loader, MessageSquare } from 'lucide-react';
 import { store } from '../services/mockStore';
 import { SkillCategory, Skill, User } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [users, setUsers] = useState<Record<string, User>>({});
   const [loading, setLoading] = useState(true);
@@ -33,6 +34,15 @@ const Home: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  const handleChat = async (targetUserId: string) => {
+    if (!currentUser) {
+        navigate('/login');
+        return;
+    }
+    const swapId = await store.startConversation(currentUser.id, targetUserId);
+    navigate('/messages', { state: { highlightSwapId: swapId } });
+  };
 
   const featuredSkills = skills.slice(0, 4);
 
@@ -114,28 +124,40 @@ const Home: React.FC = () => {
                     </div>
                     </div>
                     <div className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <img src={owner?.avatar || 'https://via.placeholder.com/32'} alt={owner?.name} className="w-8 h-8 rounded-full border border-slate-100 dark:border-slate-700" />
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{owner?.name || 'Unknown User'}</p>
-                            {owner?.jobTitle ? (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
-                                    <Briefcase className="w-3 h-3" /> {owner.jobTitle}
-                                </p>
-                            ) : (
-                                <div className="flex items-center gap-1 text-xs text-amber-500">
-                                    <Star className="w-3 h-3 fill-current" />
-                                    <span>{owner?.rating || 0}</span>
-                                </div>
-                            )}
+                        <div className="flex items-center gap-2 mb-3">
+                            <img src={owner?.avatar || 'https://via.placeholder.com/32'} alt={owner?.name} className="w-8 h-8 rounded-full border border-slate-100 dark:border-slate-700" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{owner?.name || 'Unknown User'}</p>
+                                {owner?.jobTitle ? (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                                        <Briefcase className="w-3 h-3" /> {owner.jobTitle}
+                                    </p>
+                                ) : (
+                                    <div className="flex items-center gap-1 text-xs text-amber-500">
+                                        <Star className="w-3 h-3 fill-current" />
+                                        <span>{owner?.rating || 0}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                    <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1 line-clamp-1">{skill.title}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{skill.description}</p>
-                    
-                    <Link to={`/search?skill=${skill.id}`} className="block w-full text-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
-                        Request Swap
-                    </Link>
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1 line-clamp-1">{skill.title}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{skill.description}</p>
+                        
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleChat(skill.userId)}
+                                className="px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition"
+                                title="Chat"
+                            >
+                                <MessageSquare className="w-4 h-4" />
+                            </button>
+                            <Link 
+                                to={`/search?skill=${skill.id}`} 
+                                className="flex-1 text-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                            >
+                                Request Swap
+                            </Link>
+                        </div>
                     </div>
                 </div>
                 );
