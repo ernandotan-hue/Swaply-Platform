@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle, Loader, Image as ImageIcon, Check, AlertCircle } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Loader, Image as ImageIcon, Check, AlertCircle, UploadCloud, FileText } from 'lucide-react';
 import { store } from '../services/mockStore';
 import { SkillCategory, SkillLevel } from '../types';
 
@@ -22,6 +22,8 @@ const AddSkill: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!skillId);
   const [selectedImage, setSelectedImage] = useState(PRESET_IMAGES[0].url);
+  const [verificationFile, setVerificationFile] = useState<File | null>(null);
+  const [existingVerificationUrl, setExistingVerificationUrl] = useState('');
   
   const [formData, setFormData] = useState({
       title: '',
@@ -44,11 +46,19 @@ const AddSkill: React.FC = () => {
                       experience: skill.experience
                   });
                   setSelectedImage(skill.image);
+                  setExistingVerificationUrl(skill.verificationFileUrl || '');
               }
               setInitialLoading(false);
           });
       }
   }, [skillId]);
+
+  const handleVerificationFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          setVerificationFile(file);
+      }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -58,12 +68,20 @@ const AddSkill: React.FC = () => {
       setLoading(true);
       
       try {
+          // Handle file upload
+          let vFileUrl = existingVerificationUrl;
+          if (verificationFile) {
+              const path = `verifications/${user.id}/${Date.now()}_${verificationFile.name}`;
+              vFileUrl = await store.uploadFile(verificationFile, path);
+          }
+
           if (skillId) {
               // Update existing skill
               if (confirm("Note: Updating your skill will reset its status to 'Pending Verification'. Continue?")) {
                   await store.updateSkill(skillId, {
                       ...formData,
-                      image: selectedImage
+                      image: selectedImage,
+                      verificationFileUrl: vFileUrl
                   });
               } else {
                   setLoading(false);
@@ -73,7 +91,8 @@ const AddSkill: React.FC = () => {
               // Create new skill
               await store.addSkill(user.id, {
                   ...formData,
-                  image: selectedImage
+                  image: selectedImage,
+                  verificationFileUrl: vFileUrl
               });
           }
           
@@ -192,6 +211,36 @@ const AddSkill: React.FC = () => {
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
                 />
+            </div>
+
+            <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Verification Proof</label>
+                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer flex flex-col items-center gap-2 relative">
+                    <input 
+                        type="file" 
+                        onChange={handleVerificationFileUpload} 
+                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                        accept="image/*,.pdf"
+                        required={!skillId && !existingVerificationUrl} 
+                    />
+                    {verificationFile ? (
+                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold">
+                            <FileText className="w-8 h-8" />
+                            <span>{verificationFile.name}</span>
+                        </div>
+                    ) : existingVerificationUrl ? (
+                         <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-bold">
+                            <CheckCircle className="w-8 h-8" />
+                            <span>File Uploaded (Click to change)</span>
+                        </div>
+                    ) : (
+                        <>
+                            <UploadCloud className="w-8 h-8 text-slate-300 dark:text-slate-500" />
+                            <span className="text-slate-500 dark:text-slate-400">Upload certificate or proof of work</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-600">PDF, JPG, PNG (Required)</span>
+                        </>
+                    )}
+                </div>
             </div>
 
             <button 

@@ -32,6 +32,7 @@ export interface Skill {
   level: SkillLevel;
   experience: number; // Years
   status: SkillStatus;
+  verificationFileUrl?: string; // URL to proof of skill (e.g. certificate, portfolio PDF)
 }
 
 export interface Project {

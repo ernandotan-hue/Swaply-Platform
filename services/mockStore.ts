@@ -369,7 +369,8 @@ class StoreService {
           image: skillData.image || 'https://picsum.photos/400/300',
           level: skillData.level || SkillLevel.BEGINNER,
           experience: skillData.experience || 0,
-          status: SkillStatus.PENDING, 
+          status: SkillStatus.PENDING,
+          verificationFileUrl: skillData.verificationFileUrl || '',
           createdAt: new Date()
       };
 
